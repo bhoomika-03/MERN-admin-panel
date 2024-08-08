@@ -16,7 +16,7 @@ app.post('/signup', async (req, res) => {
         let result = await user.save();
         result = result.toObject();  //mongoose use to.object library for plain js
         delete result.password; //make sure not to show passowrd
-        jwt.sign({ result }, 'jwtkey', { expiresIn: "5s" }, (err, token) => {
+        jwt.sign({ result }, jwtkey, { expiresIn: "5s" }, (err, token) => {
             if (err) {
                 res.send({ result: "something went wrong" })
             }
@@ -37,7 +37,7 @@ app.post('/login', async (req, res) => { //users is collection name
         if (req.body.email && req.body.password) {  //necessay condition
             let user = await users.findOne(req.body).select("-password"); //used select so that we can not display the password and users is here collection name
             if (user) {
-                jwt.sign({ user }, 'jwtkey', { expiresIn: "5s" }, (err, token) => {
+                jwt.sign({ user }, jwtkey, { expiresIn: "5s" }, (err, token) => {
                     if (err) {
                         res.send({ result: "something went wrong" })
                     }
@@ -59,7 +59,7 @@ app.post('/login', async (req, res) => { //users is collection name
     }
 });
 
-app.post('/add-product',verifyToken, async (req, res) => {
+app.post('/add-product', async (req, res) => {
     try {
         console.log(req.body);
         let product = new products(req.body);
@@ -72,7 +72,7 @@ app.post('/add-product',verifyToken, async (req, res) => {
     }
 });
 
-app.get('/pro-list',verifyToken, async (req, res) => {
+app.get('/pro-list', async (req, res) => {
     try {
         const list = await products.find();
         if (list.length > 0) {
@@ -97,7 +97,7 @@ app.delete('/product/:id', async (req, res) => {
     }
 });
 
-app.get('/products/:id',verifyToken, async (req, res) => {
+app.get('/products/:id', async (req, res) => {
     try {
         let result = await products.findOne({ _id: req.params.id });
         if (result) {
@@ -124,7 +124,7 @@ app.put('/product/:id', async (req, res) => {
     }
 });
 
-app.get('/search/:key', verifyToken, async (req, res) => {
+app.get('/search/:key',  async (req, res) => {
     try {
         let result = await products.find({
             "$or": [
@@ -141,33 +141,6 @@ app.get('/search/:key', verifyToken, async (req, res) => {
     }
 });
 
-function verifyToken(req, res, next) {
-    let token = req.headers['authorization'];
-    console.log('Token:', token); // Debug log
-    if (token) {
-        token = token.split(' ')[1];
-        console.log('Split Token:', token); // Debug log
-        jwt.verify(token, jwtkey, (err, valid) => {
-            if (err) {
-                console.error('Token verification error:', err); // Debug lo
-                res.status(401).send({ result: "Please provide full information" })
-              
-            } else {
-                console.log('Token is valid'); // Debug log
-                next();
-            }
-        })
-    } else {
-        console.log('No token provided'); // Debug log
-        res.status(403).send({ result: "please add token with the information" });
-    }
-}
-
-// function verifyToken(req, res, next){
-//     console.log("middleware called");
-//     res.send("working fine")
-//     next();
-// }
 
 app.listen(5000, () => {
     console.log("Server is running on PORT: 5000");
